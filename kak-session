@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# if -b flag is passed...
+if [ $1 = '-b' ]
+then
+    # assign $background to true
+    background="true"
+    # drop first argument
+    shift
+fi
+
+# assign $session_id to first argument
+session_id="$1"
+# drop first argument
+shift
+# assign $files to the remaining arguments
+files="$@"
+
+# if no kak session called $session_id exists...
+if ! kak -l | grep -q $session_id ;
+then
+    # start one as a daemon
+    kak -s $session_id -d
+fi
+
+# if -b flag is set
+if [ "$background" = "true" ]
+then
+    for file in $files
+    do
+        # send a command to edit each file to $session_id
+        echo "edit $(realpath $file)" | kak -p $session_id
+    done
+else
+    # connect to $session_id and open files
+    kak -c $session_id $files
+fi
