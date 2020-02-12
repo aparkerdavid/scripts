@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# if there is no directory called ~/.krunch
+if [ ! -d ~/.krunch ]
+then
+    # make it
+    mkdir ~/.krunch
+fi
+
+# if -r flag was passed as first argument
+if [ $1 = '-r' ]
+then
+    # assign $replace to true
+    replace='true'
+    # drop first argument
+    shift
+fi
+# assign krunch_ns to first argument
+krunch_ns=$1
+
+bench=~/.krunch/bench
+# Send an INPUT comment to the bench, erase whatever was there before.
+echo ';; KRUNCH REPL INPUT =>>\n' > $bench
+{
+# if $krunch_ns is assigned
+if [ ! -z ${krunch_ns} ]
+    then echo '(ns '$krunch_ns')' | tee -a $bench
+fi
+# print stdin, filter out leading and trailing newlines, send a copy to the bench
+cat - | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba' | tee -a $bench
+# cat - | tee -a $bench
+# Send an OUTPUT comment to the bench
+echo '\n;; KRUNCH REPL OUTPUT =>>\n' >> $bench
+
+# pipe the whole thing into grenchman
+} | grench | tee -a $bench
+
+# add contents of current bench to history
+cat $bench >> ~/.krunch/history
